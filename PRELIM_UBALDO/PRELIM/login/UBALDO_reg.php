@@ -57,18 +57,32 @@ include "style.php";
 <?php 
 
 	
-	if(isset($_POST['create'])){
+if(isset($_POST['create'])){
 
 
 
 	 $_POST['nuser']=htmlspecialchars($_POST['nuser']);
 	 $_POST['npass']=htmlspecialchars($_POST['npass']);
 
+	 $_ENV['enc']=md5($_POST['npass']);
 
-	 include "../conf/config.php";
+	 $response =$_POST['g-recaptcha-response'];
+	 $payload= file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret_key.'&response='.$response.'');
+	 $result =json_decode($payload, TRUE);
 
 
-	 $que=mysqli_query($conn, "SELECT * FROM login WHERE uname='".$_POST['nuser']."' AND upass='".$_POST['npass']."'");
+	 	if($result['success'] !=1){
+
+	 		echo "<span class='error' color='#cc0000'>You are evil or a bot. Try Again!</span>";
+	 		return false;
+	 	}
+
+	 	else{
+
+	 		 include "../conf/config.php";
+
+
+	 $que=mysqli_query($conn, "SELECT * FROM login WHERE uname='".$_POST['nuser']."' AND upass='".$_ENV['enc']."'");
 	 $R=mysqli_num_rows($que);
 
 
@@ -85,9 +99,9 @@ include "style.php";
 	else{
 
 
-	 	$enc=md5($_POST['npass']);
+	 	
 
-	 	$Insert=mysqli_query($conn, "INSERT INTO login (uname,upass,type,status,logtime1) VALUES ('".$_POST['nuser']."','".$enc."','user','active','".$_SESSION['logdate']."')");
+	 	$Insert=mysqli_query($conn, "INSERT INTO login (uname,upass,type,status,logtime1) VALUES ('".$_POST['nuser']."','".$_ENV['enc']."','user','active','".$_SESSION['logdate']."')");
 
 
  					echo "<div class='incorrect-box'>";
@@ -102,8 +116,9 @@ include "style.php";
 
 	}
 
+	 	}
+	  
 	}
-
 
 
 
